@@ -1,49 +1,38 @@
-let tasks = [];
+const Task = require('../models/Task');
 
-exports.getTasks = (req, res) => {
+exports.getTasks = async (req, res) => {
+  const tasks = await Task.find();
   res.json(tasks);
 };
 
-exports.createTask = (req, res) => {
+exports.createTask = async (req, res) => {
   const { title } = req.body;
-
   if (!title) {
     return res.status(400).json({ message: 'Title is required' });
   }
 
-  const newTask = {
-    id: Date.now().toString(),
-    title,
-    completed: false
-  };
-
-  tasks.push(newTask);
-  res.status(201).json(newTask);
+  const task = await Task.create({ title });
+  res.status(201).json(task);
 };
 
-exports.updateTask = (req, res) => {
-  const { id } = req.params;
-  const { title, completed } = req.body;
+exports.updateTask = async (req, res) => {
+  const task = await Task.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
 
-  const task = tasks.find(t => t.id === id);
   if (!task) {
     return res.status(404).json({ message: 'Task not found' });
   }
 
-  if (title !== undefined) task.title = title;
-  if (completed !== undefined) task.completed = completed;
-
   res.json(task);
 };
 
-exports.deleteTask = (req, res) => {
-  const { id } = req.params;
-
-  const index = tasks.findIndex(t => t.id === id);
-  if (index === -1) {
+exports.deleteTask = async (req, res) => {
+  const task = await Task.findByIdAndDelete(req.params.id);
+  if (!task) {
     return res.status(404).json({ message: 'Task not found' });
   }
-
-  tasks.splice(index, 1);
   res.status(204).send();
 };
